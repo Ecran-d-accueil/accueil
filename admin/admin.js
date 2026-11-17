@@ -134,9 +134,11 @@
       .then(function (a) { return a && Array.isArray(a.users) && a.users.length && a.token ? a : null; });
   }
 
-  function tryLogin(pw) {
+  function normName(s) { return String(s || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  function tryLogin(name, pw) {
     var A = S.access;
-    return A.users.reduce(function (chain, u) {
+    var candidates = A.users.filter(function (u) { return normName(u.name) === normName(name); });
+    return candidates.reduce(function (chain, u) {
       return chain.catch(function () {
         return pwKey(pw, unb64(u.salt), A.iter || ITER).then(function (k) { return decrypt(k, u); })
           .then(function (mk) { return { mk: mk, user: u }; });
@@ -152,14 +154,16 @@
     document.body.classList.add('locked');
     var box = $('#login');
     box.hidden = false;
+    $('#setup-form').hidden = true;
+    $('#login-form').hidden = false;
     var form = $('#login-form'), err = $('#login-err'), btn = $('#login-btn');
-    setTimeout(function () { $('#login-pw').focus(); }, 50);
+    setTimeout(function () { $('#login-user').focus(); }, 50);
     form.onsubmit = function (e) {
       e.preventDefault();
-      var pw = $('#login-pw').value;
-      if (!pw) return;
+      var name = $('#login-user').value, pw = $('#login-pw').value;
+      if (!name || !pw) return;
       err.textContent = ''; btn.disabled = true; btn.textContent = 'Vérification…';
-      tryLogin(pw).then(function (r) {
+      tryLogin(name, pw).then(function (r) {
         S.cfg = { owner: S.access.owner, repo: S.access.repo, branch: S.access.branch || 'main', token: r.token, mk: b64(r.mk), user: r.user.name, remember: $('#login-remember').checked };
         saveCfg();
         S.mk = r.mk;
@@ -167,9 +171,51 @@
         $('#login-pw').value = '';
         load();
       }).catch(function () {
-        err.textContent = 'Mot de passe incorrect.';
+        err.textContent = 'Identifiant ou mot de passe incorrect.';
         $('#login-pw').select();
       }).then(function () { btn.disabled = false; btn.textContent = 'Se connecter'; });
+    };
+  }
+
+  // Première installation : création du compte administrateur (+ clé GitHub, une seule fois)
+  function showSetup() {
+    document.body.classList.add('locked');
+    $('#login').hidden = false;
+    $('#login-form').hidden = true;
+    var form = $('#setup-form'), err = $('#setup-err'), btn = $('#setup-btn');
+    form.hidden = false;
+    $('#setup-owner').value = S.cfg.owner || '';
+    $('#setup-repo').value = S.cfg.repo || '';
+    $('#setup-branch').value = S.cfg.branch || 'main';
+    if (!S.cfg.owner || !S.cfg.repo) $('#setup-adv').open = true;
+    setTimeout(function () { $('#setup-user').focus(); }, 50);
+    form.onsubmit = function (e) {
+      e.preventDefault();
+      var name = $('#setup-user').value.trim(), pw = $('#setup-pw').value, pw2 = $('#setup-pw2').value;
+      err.textContent = '';
+      if (!name) { err.textContent = 'Choisissez un identifiant.'; return; }
+      if (pw.length < 10) { err.textContent = 'Le mot de passe doit contenir au moins 10 caractères.'; return; }
+      if (pw !== pw2) { err.textContent = 'Les deux mots de passe ne sont pas identiques.'; return; }
+      S.cfg.owner = $('#setup-owner').value.trim();
+      S.cfg.repo = $('#setup-repo').value.trim();
+      S.cfg.branch = $('#setup-branch').value.trim() || 'main';
+      S.cfg.token = $('#setup-token').value.trim();
+      S.cfg.remember = true;
+      btn.disabled = true; btn.textContent = 'Création du compte…';
+      testConnection().then(function (r) {
+        S.sha = r.sha; S.data = normalize(r.data);
+        return createUser(name, pw, true);
+      }).then(function () {
+        S.cfg.user = name; saveCfg();
+        $('#login').hidden = true; document.body.classList.remove('locked');
+        load();
+        toast('Compte « ' + name + ' » créé. Désormais, l\'admin demandera cet identifiant et ce mot de passe.', 'ok');
+      }).catch(function (e2) {
+        S.cfg.token = '';
+        err.textContent = e2.status === 401 ? 'Clé GitHub refusée (mal copiée ou expirée).'
+          : e2.status === 404 ? 'Dépôt introuvable : vérifiez la clé (accès au dépôt, droits « Contents ») ou les paramètres avancés.'
+          : (e2.message || 'Erreur inconnue.');
+      }).then(function () { btn.disabled = false; btn.textContent = 'Créer le compte administrateur'; });
     };
   }
 
@@ -184,19 +230,12 @@
     }).then(function () { S.access = A; });
   }
 
-  function addAccess() {
-    var name = $('#a-name').value.trim(), pw = $('#a-pw').value, pw2 = $('#a-pw2').value;
-    if (!S.connected) return toast('Connectez-vous d\'abord.', 'err');
-    if (!name) return toast('Indiquez un nom (par ex. « Secrétariat »).', 'err');
-    if (pw.length < 10) return toast('Le mot de passe doit contenir au moins 10 caractères.', 'err');
-    if (pw !== pw2) return toast('Les deux mots de passe ne sont pas identiques.', 'err');
-    var reset = !S.mk;
-    if (reset && S.access && !confirm('Vous êtes connecté avec le jeton : cela remplace TOUS les codes existants par ce nouveau code. Continuer ?')) return;
+  // Crée un utilisateur. reset = nouvelle clé maîtresse (premier compte, ou remise à zéro)
+  function createUser(name, pw, reset) {
     var A = reset ? { v: 1, iter: ITER, users: [] } : clone(S.access);
     var mk = reset ? crypto.getRandomValues(new Uint8Array(32)) : S.mk;
     var salt = crypto.getRandomValues(new Uint8Array(16));
-    var btn = $('[data-act=acadd]'); btn.disabled = true; btn.textContent = 'Enregistrement…';
-    rawKey(mk).then(function (k) {
+    return rawKey(mk).then(function (k) {
       return reset ? encrypt(k, new TextEncoder().encode(S.cfg.token)) : null;
     }).then(function (tok) {
       if (tok) A.token = tok;
@@ -206,12 +245,27 @@
       A.users.push({ id: uid('u'), name: name, created: new Date().toISOString().slice(0, 10), salt: b64(salt), iv: o.iv, ct: o.ct });
       return saveAccess(A);
     }).then(function () {
-      S.mk = mk; S.cfg.mk = b64(mk); if (!S.cfg.user) S.cfg.user = name; saveCfg();
+      S.mk = mk; S.cfg.mk = b64(mk); saveCfg();
+    });
+  }
+
+  function addAccess() {
+    var name = $('#a-name').value.trim(), pw = $('#a-pw').value, pw2 = $('#a-pw2').value;
+    if (!S.connected) return toast('Connexion à GitHub impossible pour le moment.', 'err');
+    if (!name) return toast('Indiquez un identifiant (par ex. « secretariat »).', 'err');
+    if (S.access && S.mk && S.access.users.some(function (u) { return normName(u.name) === normName(name); })) return toast('Cet identifiant existe déjà.', 'err');
+    if (pw.length < 10) return toast('Le mot de passe doit contenir au moins 10 caractères.', 'err');
+    if (pw !== pw2) return toast('Les deux mots de passe ne sont pas identiques.', 'err');
+    var reset = !S.mk;
+    if (reset && S.access && !confirm('Cela remplace TOUS les utilisateurs existants par ce nouveau compte. Continuer ?')) return;
+    var btn = $('[data-act=acadd]'); btn.disabled = true; btn.textContent = 'Enregistrement…';
+    createUser(name, pw, reset).then(function () {
+      if (!S.cfg.user) { S.cfg.user = name; saveCfg(); }
       render();
-      toast('Code « ' + name + ' » créé. Il fonctionnera d\'ici 1 à 2 minutes.', 'ok');
+      toast('Utilisateur « ' + name + ' » créé. Il pourra se connecter d\'ici 1 à 2 minutes.', 'ok');
     }).catch(function (e) {
-      toast('Impossible d\'enregistrer le code : ' + e.message, 'err');
-      btn.disabled = false; btn.textContent = 'Créer ce code';
+      toast('Impossible de créer l\'utilisateur : ' + e.message, 'err');
+      btn.disabled = false; btn.textContent = 'Créer l\'utilisateur';
     });
   }
   function changePassword(id) {
@@ -234,11 +288,11 @@
   }
   function deleteAccess(id) {
     var A = clone(S.access);
-    if (A.users.length <= 1) return toast('Il doit rester au moins un code d\'accès.', 'err');
+    if (A.users.length <= 1) return toast('Il doit rester au moins un utilisateur.', 'err');
     var u = A.users.filter(function (x) { return x.id === id; })[0];
-    if (!confirm('Supprimer le code « ' + u.name + ' » ?')) return;
+    if (!confirm('Supprimer l\'utilisateur « ' + u.name + ' » ?')) return;
     A.users = A.users.filter(function (x) { return x.id !== id; });
-    saveAccess(A).then(function () { render(); toast('Code supprimé.', 'ok'); })
+    saveAccess(A).then(function () { render(); toast('Utilisateur supprimé.', 'ok'); })
       .catch(function (e) { toast('Erreur : ' + e.message, 'err'); });
   }
   // Nouveau jeton GitHub saisi alors que des codes existent : on le rechiffre pour que les codes restent valables
@@ -657,46 +711,44 @@
     var c = S.cfg;
     var codes;
     var addForm = '<div class="grid3" style="margin-top:14px">' +
-      '<div class="field"><label for="a-name">Nom du code</label><input type="text" id="a-name" placeholder="Secrétariat" autocomplete="off"></div>' +
+      '<div class="field"><label for="a-name">Identifiant</label><input type="text" id="a-name" placeholder="secretariat" autocomplete="off" autocapitalize="off"></div>' +
       '<div class="field"><label for="a-pw">Mot de passe <span class="opt">(10 caractères min.)</span></label><input type="password" id="a-pw" autocomplete="new-password"></div>' +
       '<div class="field"><label for="a-pw2">Confirmer</label><input type="password" id="a-pw2" autocomplete="new-password"></div></div>' +
-      '<button type="button" class="btn primary sm" data-act="acadd">Créer ce code</button>';
+      '<button type="button" class="btn primary sm" data-act="acadd">Créer l\'utilisateur</button>';
     if (!S.connected) {
-      codes = '<p class="hint">Connectez d\'abord le dépôt GitHub ci-dessous (étape réservée à l\'administrateur), puis créez ici les codes de vos collègues.</p>';
+      codes = '<p class="hint">Connexion à GitHub impossible pour le moment. Si la clé GitHub a expiré, renouvelez-la dans « Configuration technique » plus bas.</p>';
     } else if (S.access && S.mk) {
       codes = '<div>' + S.access.users.map(function (u) {
         var editing = S.pwEdit === u.id;
         return '<div class="tick-row" style="flex-wrap:wrap"><span style="flex:1;min-width:200px"><strong>' + esc(u.name) + '</strong> <span class="hint" style="display:inline">· ' + (u.changed ? 'modifié le ' + esc(fmtDate(u.changed)) : 'créé le ' + esc(fmtDate(u.created || ''))) + (u.name === c.user ? ' · <em>vous</em>' : '') + '</span></span>' +
           '<button type="button" class="btn ghost sm" data-act="acpw" data-id="' + u.id + '"' + (editing ? ' aria-expanded="true"' : '') + '>Changer le mot de passe</button>' +
-          '<button type="button" class="icon del" data-act="acdel" data-id="' + u.id + '" aria-label="Supprimer le code ' + esc(u.name) + '">' + ICON.del + '</button>' +
+          '<button type="button" class="icon del" data-act="acdel" data-id="' + u.id + '" aria-label="Supprimer l\'utilisateur ' + esc(u.name) + '">' + ICON.del + '</button>' +
           (editing ? '<div style="flex-basis:100%;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:10px 4px 4px">' +
             '<div class="field" style="margin:0;flex:1;min-width:180px"><label for="pw-new">Nouveau mot de passe <span class="opt">(10 caractères min.)</span></label><input type="password" id="pw-new" autocomplete="new-password"></div>' +
             '<div class="field" style="margin:0;flex:1;min-width:180px"><label for="pw-new2">Confirmer</label><input type="password" id="pw-new2" autocomplete="new-password"></div>' +
             '<button type="button" class="btn primary sm" data-act="acpwsave" data-id="' + u.id + '">Enregistrer</button>' +
             '<button type="button" class="btn ghost sm" data-act="acpwcancel">Annuler</button></div>' : '') +
           '</div>';
-      }).join('') + '</div><h3 style="margin:18px 0 0;font-size:16px">Ajouter un code</h3>' + addForm;
-    } else if (S.access) {
-      codes = '<p class="hint">Vous êtes connecté avec le jeton GitHub. Pour gérer les codes existants, déconnectez-vous et reconnectez-vous avec un code. Sinon, vous pouvez repartir de zéro : le code créé ci-dessous <strong>remplace tous les autres</strong>.</p>' + addForm;
+      }).join('') + '</div><h3 style="margin:18px 0 0;font-size:16px">Ajouter un utilisateur</h3>' + addForm;
     } else {
-      codes = '<p class="hint" style="color:#B8066A"><strong>Aucun code n\'existe encore.</strong> Créez le premier : ensuite, l\'admin demandera un mot de passe à l\'ouverture.</p>' + addForm;
+      codes = '<p class="hint">Pour repartir de zéro, créez un nouvel utilisateur : il <strong>remplacera tous les autres</strong>.</p>' + addForm;
     }
-    return '<div class="panel-head"><h1>Accès &amp; connexion</h1></div>' +
-      '<p class="lead">L\'admin est protégé par des <strong>codes d\'accès</strong> (un par personne si vous voulez). Sans code, personne ne peut rien modifier sur l\'écran.</p>' +
-      '<section class="card"><h2>Codes d\'accès</h2>' + codes +
-      '<p class="hint" style="margin-top:14px">Les mots de passe ne sont jamais enregistrés en clair. Supprimer un code empêche cette personne de se connecter ; si vous craignez qu\'elle ait copié des informations, renouvelez aussi le jeton GitHub ci-dessous.</p></section>' +
-      '<details class="card"' + (S.connected && S.access ? '' : ' open') + '><summary><h2 style="display:inline">Connexion au dépôt GitHub</h2> <span class="hint" style="display:inline">(administrateur, une seule fois)</span></summary>' +
-      '<p class="hint" style="margin:10px 0 16px">' + (S.connected ? '✓ Connecté à <strong>' + esc(c.owner + '/' + c.repo) + '</strong>.' : 'L\'admin enregistre le contenu dans votre dépôt grâce à un jeton GitHub.') + ' Pour renouveler un jeton expiré, collez le nouveau ici : les codes d\'accès restent valables.</p>' +
+    return '<div class="panel-head"><h1>Utilisateurs</h1></div>' +
+      '<p class="lead">Chaque personne se connecte à l\'admin avec son <strong>identifiant</strong> et son <strong>mot de passe</strong>.</p>' +
+      '<section class="card"><h2>Comptes</h2>' + codes +
+      '<p class="hint" style="margin-top:14px">Les mots de passe ne sont jamais enregistrés en clair. Supprimer un utilisateur l\'empêche de se connecter.</p></section>' +
+      '<details class="card"' + (S.connected ? '' : ' open') + '><summary><h2 style="display:inline">Configuration technique</h2> <span class="hint" style="display:inline">(clé GitHub – à renouveler une fois par an)</span></summary>' +
+      '<p class="hint" style="margin:10px 0 16px">' + (S.connected ? '✓ Le site enregistre bien dans <strong>' + esc(c.owner + '/' + c.repo) + '</strong>. Rien à faire ici' : 'L\'admin n\'arrive pas à enregistrer sur GitHub : la clé a sans doute expiré') + '. Quand la clé expire, créez-en une nouvelle et collez-la ici : les identifiants et mots de passe restent valables.</p>' +
       '<div class="grid3">' +
       '<div class="field"><label for="g-owner">Compte GitHub</label><input type="text" id="g-owner" value="' + esc(c.owner) + '" placeholder="eafc-andenne" autocomplete="off"></div>' +
       '<div class="field"><label for="g-repo">Dépôt</label><input type="text" id="g-repo" value="' + esc(c.repo) + '" placeholder="affichage-hall" autocomplete="off"></div>' +
       '<div class="field"><label for="g-branch">Branche</label><input type="text" id="g-branch" value="' + esc(c.branch) + '" placeholder="main" autocomplete="off"></div></div>' +
-      '<div class="field"><label for="g-token">Jeton d\'accès (fine-grained token)</label><input type="password" id="g-token" value="' + esc(c.token) + '" placeholder="github_pat_…" autocomplete="off"></div>' +
-      '<div class="row-actions"><button type="button" class="btn teal" data-act="gconnect">Enregistrer et tester</button>' +
+      '<div class="field"><label for="g-token">Nouvelle clé GitHub</label><input type="password" id="g-token" value="" placeholder="github_pat_…" autocomplete="off"></div>' +
+      '<div class="row-actions"><button type="button" class="btn teal" data-act="gconnect">Enregistrer la nouvelle clé</button>' +
       (c.token ? '<button type="button" class="btn ghost" data-act="greload">Recharger depuis GitHub</button>' : '') + '</div>' +
-      '<h3 style="margin:22px 0 8px;font-size:16px">Créer le jeton</h3><ol class="steps">' +
+      '<h3 style="margin:22px 0 8px;font-size:16px">Créer la clé</h3><ol class="steps">' +
       '<li>Sur GitHub : <strong>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</strong>.</li>' +
-      '<li><strong>Repository access</strong> : « Only select repositories » → choisissez le dépôt de l\'affichage.</li>' +
+      '<li><strong>Resource owner</strong> : l\'organisation qui possède le dépôt. <strong>Repository access</strong> : « Only select repositories » → le dépôt de l\'affichage.</li>' +
       '<li><strong>Permissions → Repository permissions → Contents</strong> : « Read and write ».</li>' +
       '<li>Choisissez une date d\'expiration (par ex. 1 an), générez, copiez le jeton et collez-le ci-dessus.</li></ol></details>' +
       '<section class="card"><h2>Sauvegarde</h2><p class="hint" style="margin-bottom:12px">Téléchargez une copie de tout le contenu, ou restaurez-en une.</p>' +
@@ -833,7 +885,8 @@
     S.cfg.owner = $('#g-owner').value.trim();
     S.cfg.repo = $('#g-repo').value.trim();
     S.cfg.branch = $('#g-branch').value.trim() || 'main';
-    S.cfg.token = $('#g-token').value.trim();
+    var newTok = $('#g-token').value.trim();
+    if (newTok) S.cfg.token = newTok;
     saveCfg();
     testConnection().then(function (r) {
       S.sha = r.sha; setConnected(true);
@@ -912,6 +965,7 @@
   fetchAccess().then(function (a) {
     S.access = a;
     if (a && !S.cfg.token) showLogin();
+    else if (!a && !S.cfg.token) showSetup();
     else { document.body.classList.remove('locked'); load(); }
   });
 })();

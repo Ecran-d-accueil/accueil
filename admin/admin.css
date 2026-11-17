@@ -178,6 +178,13 @@ body.locked .layout,body.locked .topbar{visibility:hidden}
 .check{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-size:15px}
 .check input{width:20px;height:20px;accent-color:var(--teal)}
 .login-err{color:var(--danger);font-weight:600;min-height:22px;margin:4px 0 8px}
+.login{overflow-y:auto;align-items:flex-start}
+.login-card{margin:auto}
+.login-card[hidden]{display:none}
+.setup-card{width:min(520px,100%)}
+.setup-help{margin:0 0 14px;font-size:15px}
+.setup-help summary{cursor:pointer;color:var(--teal-dk);font-weight:600;min-height:32px}
+.setup-help .steps{margin-top:8px;font-size:14px}
 .linkish{margin-top:14px;background:none;border:0;color:var(--teal-dk);text-decoration:underline;cursor:pointer;font-size:14px;min-height:44px}
 details.card > summary{cursor:pointer;list-style:none}
 details.card > summary::-webkit-details-marker{display:none}
