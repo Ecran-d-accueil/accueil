@@ -1,0 +1,21 @@
+{
+  "v": 1,
+  "iter": 310000,
+  "users": [
+    {
+      "id": "umwkqlzqm6eak",
+      "name": "stsi",
+      "created": "2026-11-17",
+      "salt": "braMTCDEbiaLSB0trAm6mw==",
+      "iv": "RqWMrlGgUqjuU1OE",
+      "ct": "wZDVovhaaGbm70+cDYZP2TjtfFKfMeSUL4OsSygSvKbpydxmJyQbm5Xw2rjO2HyW"
+    }
+  ],
+  "token": {
+    "iv": "aXL/YHNOvte8riat",
+    "ct": "j7lWMiq9PxKZ+gmbQ1A0IppabyYEKERniq7Cta49cYXd/ELZNUoU5HY7OvBer9U5UZ7uhvKHKrDGzAWEHF3ZZRDHBdaxMfuuRjMnhOKDDrDRA3ghRhmg6i0i0flypoLKJ/inVKOBKHrn6u8LOw=="
+  },
+  "owner": "ecran-d-accueil",
+  "repo": "accueil",
+  "branch": "main"
+}
