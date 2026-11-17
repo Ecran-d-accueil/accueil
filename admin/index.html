@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin – Affichage du hall · EAFC Andenne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header class="topbar">
+  <img src="../assets/logo.png" alt="EAFC Andenne" class="tb-logo">
+  <div class="tb-title">
+    <strong>Affichage du hall</strong>
+    <span id="conn" class="conn">Non connecté</span>
+  </div>
+  <span class="spacer"></span>
+  <span id="dirty" class="dirty" hidden>Modifications non publiées</span>
+  <a class="btn ghost" href="../" target="_blank" rel="noopener">Ouvrir l'écran</a>
+  <button id="logout" class="btn ghost" type="button" hidden>Se déconnecter</button>
+  <button id="publish" class="btn primary" type="button">Publier</button>
+</header>
+
+<div class="layout">
+  <nav class="tabs" aria-label="Sections">
+    <button type="button" class="tab" data-tab="slides"><span class="tab-ico">★</span>À la une</button>
+    <button type="button" class="tab" data-tab="courses"><span class="tab-ico">◷</span>Planning des cours</button>
+    <button type="button" class="tab" data-tab="ticker"><span class="tab-ico">≋</span>Bandeau défilant</button>
+    <button type="button" class="tab" data-tab="settings"><span class="tab-ico">✎</span>Textes &amp; réglages</button>
+    <button type="button" class="tab" data-tab="github"><span class="tab-ico">⚿</span>Accès &amp; connexion</button>
+  </nav>
+
+  <main id="editor" class="editor"></main>
+
+  <aside class="preview" aria-label="Aperçu">
+    <div class="pv-head">
+      <strong>Aperçu en direct</strong>
+      <span id="pv-mode" class="pv-mode"></span>
+    </div>
+    <div class="pv-frame" id="pv-frame">
+      <iframe id="pv" src="../index.html?preview=1" title="Aperçu de l'écran du hall" tabindex="-1"></iframe>
+    </div>
+    <p class="pv-hint">L'aperçu montre vos modifications tout de suite. L'écran du hall ne change qu'après <strong>Publier</strong> (1 à 3 minutes).</p>
+  </aside>
+</div>
+
+<div id="login" class="login" hidden>
+  <form id="login-form" class="login-card" autocomplete="on">
+    <img src="../assets/logo.png" alt="EAFC Andenne" class="login-logo">
+    <h1>Administration de l'affichage</h1>
+    <p class="hint">Entrez votre code d'accès.</p>
+    <input type="text" name="username" value="affichage-eafc" autocomplete="username" hidden>
+    <div class="field"><label for="login-pw">Mot de passe</label><input type="password" id="login-pw" autocomplete="current-password" required></div>
+    <label class="check"><input type="checkbox" id="login-remember"> Rester connecté sur cet ordinateur</label>
+    <p id="login-err" class="login-err" role="alert"></p>
+    <button id="login-btn" class="btn primary" type="submit">Se connecter</button>
+  </form>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="admin.js"></script>
+</body>
+</html>

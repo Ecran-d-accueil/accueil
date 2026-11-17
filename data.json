@@ -1,0 +1,237 @@
+{
+  "updatedAt": "2026-11-17T11:00:00.000Z",
+  "settings": {
+    "theme": "light",
+    "slideDuration": 12,
+    "scheduleTitle": "Cours du jour",
+    "scheduleFooter": "Un doute ? L'accueil est là pour vous orienter.",
+    "scheduleEmpty": "Plus de cours aujourd'hui.\nÀ bientôt !",
+    "hideFinished": true,
+    "showTomorrow": true,
+    "scheduleRows": 5,
+    "schedulePageSeconds": 10,
+    "tickerLabel": "Infos",
+    "tickerSpeed": 110,
+    "refreshMinutes": 2,
+    "signs": [
+      {
+        "id": "g1",
+        "text": "Secrétariat",
+        "arrow": "right",
+        "active": true
+      }
+    ]
+  },
+  "slides": [
+    {
+      "id": "s1",
+      "active": true,
+      "layout": "classic",
+      "color": "teal",
+      "wide": false,
+      "tag": "À la une",
+      "kicker": "Inscriptions ouvertes",
+      "title": "Aide-soignant*·e*",
+      "text": "Une formation qualifiante en journée pour travailler auprès des patients, en maison de repos ou à domicile.",
+      "footerLabel": "Infos et inscriptions",
+      "footerText": "À l'accueil ou sur *eafcandenne.be*",
+      "qr": "https://eafcandenne.be/",
+      "qrLabel": "eafcandenne.be",
+      "image": "",
+      "duration": "",
+      "start": "",
+      "end": ""
+    },
+    {
+      "id": "s2",
+      "active": true,
+      "layout": "announce",
+      "color": "magenta",
+      "wide": false,
+      "tag": "Cours du soir",
+      "kicker": "",
+      "title": "Langues, cuisine & *loisirs*",
+      "text": "Anglais, espagnol, cuisine italienne… Apprenez après le travail, à votre rythme.",
+      "footerLabel": "",
+      "footerText": "",
+      "qr": "",
+      "qrLabel": "",
+      "image": "",
+      "duration": "",
+      "start": "",
+      "end": ""
+    },
+    {
+      "id": "s3",
+      "active": true,
+      "layout": "classic",
+      "color": "dark",
+      "wide": false,
+      "tag": "Nouveau",
+      "kicker": "Pour les travailleurs",
+      "title": "Bilan de *compétences*",
+      "text": "Faites le point sur votre parcours et construisez votre projet professionnel.",
+      "footerLabel": "Renseignements",
+      "footerText": "À l'accueil",
+      "qr": "",
+      "qrLabel": "",
+      "image": "",
+      "duration": "",
+      "start": "",
+      "end": ""
+    }
+  ],
+  "courses": [
+    {
+      "id": "c1",
+      "days": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "start": "08:30",
+      "end": "12:30",
+      "name": "Aide-soignant",
+      "kind": "Formation qualifiante",
+      "room": "A1",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "c2",
+      "days": [
+        2,
+        4
+      ],
+      "start": "09:00",
+      "end": "12:00",
+      "name": "Technicien en comptabilité",
+      "kind": "Formation qualifiante",
+      "room": "B2",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "c3",
+      "days": [
+        1,
+        2,
+        5
+      ],
+      "start": "13:00",
+      "end": "16:30",
+      "name": "Complément CESS",
+      "kind": "Enseignement secondaire",
+      "room": "A3",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "c4",
+      "days": [
+        2,
+        3
+      ],
+      "start": "13:30",
+      "end": "16:30",
+      "name": "Aide familial",
+      "kind": "Formation qualifiante",
+      "room": "A2",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "c5",
+      "days": [
+        1,
+        2
+      ],
+      "start": "18:00",
+      "end": "21:00",
+      "name": "Anglais",
+      "kind": "Cours du soir",
+      "room": "C1",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "c6",
+      "days": [
+        3
+      ],
+      "start": "18:00",
+      "end": "21:00",
+      "name": "Espagnol",
+      "kind": "Cours du soir",
+      "room": "C1",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "c7",
+      "days": [
+        2,
+        4
+      ],
+      "start": "18:30",
+      "end": "21:30",
+      "name": "Cuisine italienne",
+      "kind": "Cours du soir",
+      "room": "Cuisine",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "c8",
+      "days": [
+        4
+      ],
+      "start": "18:00",
+      "end": "21:00",
+      "name": "Électricité – connaissances de base",
+      "kind": "Cours du soir",
+      "room": "Atelier",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    }
+  ],
+  "ticker": [
+    {
+      "id": "t1",
+      "active": true,
+      "text": "Bienvenue à l'EAFC Andenne"
+    },
+    {
+      "id": "t2",
+      "active": true,
+      "text": "Rue Adeline Henin 4, 5300 Andenne"
+    },
+    {
+      "id": "t3",
+      "active": true,
+      "text": "Bilan de compétences : renseignez-vous à l'accueil"
+    },
+    {
+      "id": "t4",
+      "active": true,
+      "text": "Toutes nos formations sur *eafcandenne.be*"
+    }
+  ]
+}

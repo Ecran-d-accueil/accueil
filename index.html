@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>EAFC Andenne – Affichage du hall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/tv.css">
+</head>
+<body>
+<div id="stage">
+  <div class="decor" aria-hidden="true">
+    <i class="d-circle-mag"></i>
+    <i class="d-circle-teal"></i>
+    <i class="d-ring"></i>
+    <div class="d-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <header class="top">
+    <img id="logo" src="assets/logo.png" alt="EAFC Andenne – Enseignement pour adultes et formation continue">
+    <div id="signs" class="signs" aria-label="Orientation"></div>
+    <div class="clock">
+      <div id="clock-time" class="clock-time">--:--</div>
+      <div id="clock-date" class="clock-date"></div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="featured" aria-label="À la une">
+      <div id="slides"></div>
+      <div id="dots" aria-hidden="true"></div>
+    </section>
+    <section id="schedule" aria-labelledby="sched-title">
+      <div class="sched-head">
+        <h2 id="sched-title">Cours du jour</h2>
+        <span id="sched-meta" class="sched-meta"></span>
+      </div>
+      <div id="sched-list" class="sched-list"></div>
+      <div class="sched-foot" id="sched-foot"><i aria-hidden="true"></i><span id="sched-foot-text"></span></div>
+    </section>
+  </main>
+
+  <footer id="ticker">
+    <div class="t-label">
+      <svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M19 6a8 8 0 0 1 0 12"/></svg>
+      <span id="ticker-label">INFOS</span>
+    </div>
+    <div class="t-window"><div id="ticker-track" class="t-track"></div></div>
+  </footer>
+</div>
+<script src="js/qrcode.js"></script>
+<script src="js/tv.js"></script>
+</body>
+</html>
