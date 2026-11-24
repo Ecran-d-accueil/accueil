@@ -59,32 +59,12 @@
     <button id="login-btn" class="btn primary" type="submit">Se connecter</button>
   </form>
 
-  <form id="setup-form" class="login-card setup-card" hidden>
+  <div id="not-installed" class="login-card" hidden>
     <img src="../assets/logo.png" alt="EAFC Andenne" class="login-logo">
-    <h1>Installation de l'admin</h1>
-    <p class="hint">À faire une seule fois : créez le compte administrateur.</p>
-    <div class="field"><label for="setup-user">Identifiant</label><input type="text" id="setup-user" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="admin" required></div>
-    <div class="field"><label for="setup-pw">Mot de passe <span class="opt">(10 caractères min.)</span></label><input type="password" id="setup-pw" autocomplete="new-password" required></div>
-    <div class="field"><label for="setup-pw2">Confirmer le mot de passe</label><input type="password" id="setup-pw2" autocomplete="new-password" required></div>
-    <div class="field"><label for="setup-token">Clé GitHub <span class="opt">(fine-grained token)</span></label><input type="password" id="setup-token" autocomplete="off" placeholder="github_pat_…" required>
-      <p class="hint" style="margin:6px 0 0">Elle permet à l'admin d'enregistrer sur votre dépôt. Elle sera chiffrée avec votre mot de passe : vous n'aurez plus à la saisir.</p></div>
-    <details class="setup-help"><summary>Comment obtenir la clé GitHub ?</summary>
-      <ol class="steps">
-        <li>Sur GitHub : photo de profil → <strong>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</strong>.</li>
-        <li><strong>Resource owner</strong> : l'organisation propriétaire du dépôt.</li>
-        <li><strong>Repository access</strong> : « Only select repositories » → le dépôt de l'affichage.</li>
-        <li><strong>Permissions → Repository permissions → Contents</strong> : « Read and write ».</li>
-        <li>Expiration : 1 an → <strong>Generate token</strong> → copiez la clé ici.</li>
-      </ol>
-    </details>
-    <details id="setup-adv" class="setup-help"><summary>Paramètres avancés</summary>
-      <div class="field"><label for="setup-owner">Compte ou organisation GitHub</label><input type="text" id="setup-owner" autocomplete="off"></div>
-      <div class="field"><label for="setup-repo">Dépôt</label><input type="text" id="setup-repo" autocomplete="off"></div>
-      <div class="field"><label for="setup-branch">Branche</label><input type="text" id="setup-branch" autocomplete="off"></div>
-    </details>
-    <p id="setup-err" class="login-err" role="alert"></p>
-    <button id="setup-btn" class="btn primary" type="submit">Créer le compte administrateur</button>
-  </form>
+    <h1>Admin pas encore installé</h1>
+    <p class="hint">Ouvrez la page d'installation pour créer le compte administrateur.</p>
+    <a class="btn primary" href="../installation/">Aller à l'installation</a>
+  </div>
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>

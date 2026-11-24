@@ -69,6 +69,12 @@
     for (k in DEFAULT_SETTINGS) s[k] = DEFAULT_SETTINGS[k];
     for (k in (d.settings || {})) s[k] = d.settings[k];
     if (!Array.isArray(s.signs)) s.signs = [{ id: 'g1', text: 'Secrétariat', arrow: 'right', active: true }];
+    if (!Array.isArray(s.floors)) s.floors = [
+      { id: 'f0', badge: '0', name: 'Rez-de-chaussée', rooms: 'Cafétéria – Classe 1 – Salle des professeurs', arrow: 'right' },
+      { id: 'f1', badge: '1', name: '1er étage', rooms: 'Classes 2 et 3', arrow: '' },
+      { id: 'f2', badge: '2', name: '2e étage', rooms: 'Classes 4, 5 et 6 – Bureau de la direction', arrow: '' }
+    ];
+    if (s.showFloors == null) s.showFloors = true;
     return {
       updatedAt: d.updatedAt || '',
       settings: s,
@@ -111,6 +117,7 @@
    * Le fichier public ne contient donc ni jeton ni mot de passe en clair.
    */
   var ITER = 310000;
+  var INSTALL = document.body.dataset.mode === 'install';
   function b64(buf) { var b = new Uint8Array(buf), s = ''; for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s); }
   function unb64(s) { var bin = atob(s), a = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a; }
   function pwKey(pw, salt, iter) {
@@ -128,7 +135,7 @@
   }
 
   function fetchAccess() {
-    return fetch('acces.json?t=' + Date.now(), { cache: 'no-store' })
+    return fetch((INSTALL ? '../admin/' : '') + 'acces.json?t=' + Date.now(), { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; })
       .then(function (a) { return a && Array.isArray(a.users) && a.users.length && a.token ? a : null; });
@@ -154,7 +161,6 @@
     document.body.classList.add('locked');
     var box = $('#login');
     box.hidden = false;
-    $('#setup-form').hidden = true;
     $('#login-form').hidden = false;
     var form = $('#login-form'), err = $('#login-err'), btn = $('#login-btn');
     setTimeout(function () { $('#login-user').focus(); }, 50);
@@ -177,45 +183,62 @@
     };
   }
 
-  // Première installation : création du compte administrateur (+ clé GitHub, une seule fois)
-  function showSetup() {
-    document.body.classList.add('locked');
-    $('#login').hidden = false;
-    $('#login-form').hidden = true;
+  // Page d'installation (installation/index.html) : 1re création du compte, ou renouvellement de la clé
+  function runInstall() {
     var form = $('#setup-form'), err = $('#setup-err'), btn = $('#setup-btn');
-    form.hidden = false;
     $('#setup-owner').value = S.cfg.owner || '';
     $('#setup-repo').value = S.cfg.repo || '';
     $('#setup-branch').value = S.cfg.branch || 'main';
     if (!S.cfg.owner || !S.cfg.repo) $('#setup-adv').open = true;
-    setTimeout(function () { $('#setup-user').focus(); }, 50);
+    fetchAccess().then(function (a) {
+      S.access = a;
+      var renew = !!a;
+      form.dataset.mode = renew ? 'renew' : 'create';
+      $('#setup-title').textContent = renew ? 'Renouveler la clé' : 'Installation de l\'admin';
+      $('#setup-intro').textContent = renew
+        ? 'L\'admin est déjà installé. Connectez-vous avec un compte existant et collez la nouvelle clé.'
+        : 'À faire une seule fois : créez le compte administrateur.';
+      $('#setup-pw2-field').hidden = renew;
+      $('#setup-pw2').required = !renew;
+      btn.textContent = renew ? 'Enregistrer la nouvelle clé' : 'Créer le compte administrateur';
+      form.hidden = false;
+      setTimeout(function () { $('#setup-user').focus(); }, 50);
+    });
     form.onsubmit = function (e) {
       e.preventDefault();
+      var renew = form.dataset.mode === 'renew';
       var name = $('#setup-user').value.trim(), pw = $('#setup-pw').value, pw2 = $('#setup-pw2').value;
       err.textContent = '';
-      if (!name) { err.textContent = 'Choisissez un identifiant.'; return; }
-      if (pw.length < 10) { err.textContent = 'Le mot de passe doit contenir au moins 10 caractères.'; return; }
-      if (pw !== pw2) { err.textContent = 'Les deux mots de passe ne sont pas identiques.'; return; }
-      S.cfg.owner = $('#setup-owner').value.trim();
-      S.cfg.repo = $('#setup-repo').value.trim();
-      S.cfg.branch = $('#setup-branch').value.trim() || 'main';
-      S.cfg.token = $('#setup-token').value.trim();
-      S.cfg.remember = true;
-      btn.disabled = true; btn.textContent = 'Création du compte…';
-      testConnection().then(function (r) {
-        S.sha = r.sha; S.data = normalize(r.data);
-        return createUser(name, pw, true);
+      if (!name) { err.textContent = 'Indiquez un identifiant.'; return; }
+      if (!renew && pw.length < 10) { err.textContent = 'Le mot de passe doit contenir au moins 10 caractères.'; return; }
+      if (!renew && pw !== pw2) { err.textContent = 'Les deux mots de passe ne sont pas identiques.'; return; }
+      var label = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Un instant…';
+      var step = Promise.resolve();
+      if (renew) {
+        step = tryLogin(name, pw).catch(function () { var x = new Error('Identifiant ou mot de passe incorrect.'); x.login = true; throw x; })
+          .then(function (r) { S.mk = r.mk; name = r.user.name; });
+      }
+      step.then(function () {
+        S.cfg.owner = $('#setup-owner').value.trim();
+        S.cfg.repo = $('#setup-repo').value.trim();
+        S.cfg.branch = $('#setup-branch').value.trim() || 'main';
+        S.cfg.token = $('#setup-token').value.trim();
+        S.cfg.remember = true;
+        return testConnection();
+      }).then(function (r) {
+        S.sha = r.sha;
+        return renew ? updateAccessToken() : createUser(name, pw, true);
       }).then(function () {
-        S.cfg.user = name; saveCfg();
-        $('#login').hidden = true; document.body.classList.remove('locked');
-        load();
-        toast('Compte « ' + name + ' » créé. Désormais, l\'admin demandera cet identifiant et ce mot de passe.', 'ok');
+        S.cfg.user = name; if (S.mk) S.cfg.mk = b64(S.mk); saveCfg();
+        form.hidden = true; $('#setup-done').hidden = false;
       }).catch(function (e2) {
         S.cfg.token = '';
-        err.textContent = e2.status === 401 ? 'Clé GitHub refusée (mal copiée ou expirée).'
+        err.textContent = e2.login ? e2.message
+          : e2.status === 401 ? 'Clé refusée (mal copiée ou expirée).'
           : e2.status === 404 ? 'Dépôt introuvable : vérifiez la clé (accès au dépôt, droits « Contents ») ou les paramètres avancés.'
           : (e2.message || 'Erreur inconnue.');
-      }).then(function () { btn.disabled = false; btn.textContent = 'Créer le compte administrateur'; });
+      }).then(function () { btn.disabled = false; btn.textContent = label; });
     };
   }
 
@@ -251,7 +274,7 @@
 
   function addAccess() {
     var name = $('#a-name').value.trim(), pw = $('#a-pw').value, pw2 = $('#a-pw2').value;
-    if (!S.connected) return toast('Connexion à GitHub impossible pour le moment.', 'err');
+    if (!S.connected) return toast('Enregistrement impossible pour le moment.', 'err');
     if (!name) return toast('Indiquez un identifiant (par ex. « secretariat »).', 'err');
     if (S.access && S.mk && S.access.users.some(function (u) { return normName(u.name) === normName(name); })) return toast('Cet identifiant existe déjà.', 'err');
     if (pw.length < 10) return toast('Le mot de passe doit contenir au moins 10 caractères.', 'err');
@@ -352,7 +375,7 @@
   function setConnected(ok) {
     S.connected = ok;
     var c = $('#conn');
-    c.textContent = ok ? (S.cfg.user ? 'Connecté : ' + S.cfg.user : 'Connecté à ' + S.cfg.owner + '/' + S.cfg.repo) : 'Non connecté – modifications locales';
+    c.textContent = ok ? 'Connecté' + (S.cfg.user ? ' : ' + S.cfg.user : '') : 'Non connecté';
     $('#logout').hidden = !S.cfg.token;
     c.classList.toggle('ok', ok);
   }
@@ -376,7 +399,7 @@
     var p;
     if (S.cfg.token && S.cfg.owner && S.cfg.repo) {
       p = ghGetData().then(function (r) { S.sha = r.sha; setConnected(true); return r.data; })
-        .catch(function (e) { setConnected(false); toast('Connexion GitHub impossible : ' + e.message, 'err'); return fetchLocal(); });
+        .catch(function (e) { setConnected(false); toast(e.status === 401 ? 'Accès au site expiré : contactez la personne qui a installé l\'admin.' : 'Connexion impossible : ' + e.message, 'err'); return fetchLocal(); });
     } else {
       setConnected(false);
       p = fetchLocal();
@@ -409,8 +432,7 @@
   /* ---------- Publication ---------- */
   function publish() {
     if (!S.connected) {
-      toast("Connectez d'abord votre dépôt GitHub (onglet Connexion).", 'err');
-      switchTab('github');
+      toast('Enregistrement impossible : l\'accès a peut-être expiré. Contactez la personne qui a installé l\'admin.', 'err');
       return;
     }
     var btn = $('#publish');
@@ -438,7 +460,7 @@
       markDirty(false);
       toast("Publié ! L'écran du hall se mettra à jour d'ici 1 à 3 minutes.", 'ok');
     }).catch(function (e) {
-      toast('La publication a échoué : ' + e.message, 'err');
+      toast(e.status === 401 ? 'La publication a échoué : accès expiré. Contactez la personne qui a installé l\'admin.' : 'La publication a échoué : ' + e.message, 'err');
     }).then(function () {
       btn.disabled = false; btn.textContent = 'Publier';
     });
@@ -689,9 +711,27 @@
       (signs.length < 3 ? '<button type="button" class="btn ghost sm" data-act="signadd" style="margin-top:6px">+ Ajouter un panneau</button>' : '') + '</section>';
   }
 
+  function viewFloors() {
+    var st = S.data.settings;
+    var rows = st.floors.map(function (f, i) {
+      return '<div class="floor-row">' +
+        '<div class="field"><label for="fl-b-' + i + '">Pastille</label><input type="text" id="fl-b-' + i + '" data-floor="badge" data-i="' + i + '" value="' + esc(f.badge) + '" maxlength="3" placeholder="0"></div>' +
+        '<div class="field"><label for="fl-n-' + i + '">Étage</label><input type="text" id="fl-n-' + i + '" data-floor="name" data-i="' + i + '" value="' + esc(f.name) + '" placeholder="Rez-de-chaussée"></div>' +
+        '<div class="field"><label for="fl-r-' + i + '">Locaux</label><input type="text" id="fl-r-' + i + '" data-floor="rooms" data-i="' + i + '" value="' + esc(f.rooms) + '" placeholder="Cafétéria – Classe 1"></div>' +
+        '<div class="field"><label for="fl-a-' + i + '">Flèche</label><select id="fl-a-' + i + '" data-floor="arrow" data-i="' + i + '"><option value="">Aucune</option>' +
+        ARROWS.map(function (a) { return '<option value="' + a[0] + '"' + (f.arrow === a[0] ? ' selected' : '') + '>' + a[1] + '</option>'; }).join('') + '</select></div>' +
+        '<button type="button" class="icon" data-act="flup" data-i="' + i + '" aria-label="Monter"' + (i === 0 ? ' disabled' : '') + '>' + ICON.up + '</button>' +
+        '<button type="button" class="icon del" data-act="fldel" data-i="' + i + '" aria-label="Supprimer cet étage">' + ICON.del + '</button></div>';
+    }).join('');
+    return '<section class="card"><h2>Plan des étages</h2><p class="hint" style="margin-bottom:14px">Bandeau permanent au-dessus des messages défilants. Jusqu\'à 4 colonnes.</p>' +
+      setSwitch('showFloors', 'Afficher le plan des étages') +
+      (rows || '<p class="hint">Aucun étage.</p>') +
+      (st.floors.length < 4 ? '<button type="button" class="btn ghost sm" data-act="fladd" style="margin-top:6px">+ Ajouter un étage</button>' : '') + '</section>';
+  }
+
   function viewSettings() {
     var st = S.data.settings;
-    return '<div class="panel-head"><h1>Textes &amp; réglages</h1></div><p class="lead">Tous les textes fixes de l\'écran et son comportement.</p>' + viewSigns() +
+    return '<div class="panel-head"><h1>Textes &amp; réglages</h1></div><p class="lead">Tous les textes fixes de l\'écran et son comportement.</p>' + viewSigns() + viewFloors() +
       '<section class="card"><h2>Apparence</h2><fieldset><legend>Thème de l\'écran</legend><div class="seg">' +
       '<label><input type="radio" name="theme" value="light" data-s="theme"' + (st.theme !== 'dark' ? ' checked' : '') + '>Clair</label>' +
       '<label><input type="radio" name="theme" value="dark" data-s="theme"' + (st.theme === 'dark' ? ' checked' : '') + '>Sombre</label></div></fieldset>' +
@@ -716,7 +756,7 @@
       '<div class="field"><label for="a-pw2">Confirmer</label><input type="password" id="a-pw2" autocomplete="new-password"></div></div>' +
       '<button type="button" class="btn primary sm" data-act="acadd">Créer l\'utilisateur</button>';
     if (!S.connected) {
-      codes = '<p class="hint">Connexion à GitHub impossible pour le moment. Si la clé GitHub a expiré, renouvelez-la dans « Configuration technique » plus bas.</p>';
+      codes = '<p class="hint">Enregistrement impossible pour le moment : l\'accès a peut-être expiré. Contactez la personne qui a installé l\'admin.</p>';
     } else if (S.access && S.mk) {
       codes = '<div>' + S.access.users.map(function (u) {
         var editing = S.pwEdit === u.id;
@@ -737,23 +777,10 @@
       '<p class="lead">Chaque personne se connecte à l\'admin avec son <strong>identifiant</strong> et son <strong>mot de passe</strong>.</p>' +
       '<section class="card"><h2>Comptes</h2>' + codes +
       '<p class="hint" style="margin-top:14px">Les mots de passe ne sont jamais enregistrés en clair. Supprimer un utilisateur l\'empêche de se connecter.</p></section>' +
-      '<details class="card"' + (S.connected ? '' : ' open') + '><summary><h2 style="display:inline">Configuration technique</h2> <span class="hint" style="display:inline">(clé GitHub – à renouveler une fois par an)</span></summary>' +
-      '<p class="hint" style="margin:10px 0 16px">' + (S.connected ? '✓ Le site enregistre bien dans <strong>' + esc(c.owner + '/' + c.repo) + '</strong>. Rien à faire ici' : 'L\'admin n\'arrive pas à enregistrer sur GitHub : la clé a sans doute expiré') + '. Quand la clé expire, créez-en une nouvelle et collez-la ici : les identifiants et mots de passe restent valables.</p>' +
-      '<div class="grid3">' +
-      '<div class="field"><label for="g-owner">Compte GitHub</label><input type="text" id="g-owner" value="' + esc(c.owner) + '" placeholder="eafc-andenne" autocomplete="off"></div>' +
-      '<div class="field"><label for="g-repo">Dépôt</label><input type="text" id="g-repo" value="' + esc(c.repo) + '" placeholder="affichage-hall" autocomplete="off"></div>' +
-      '<div class="field"><label for="g-branch">Branche</label><input type="text" id="g-branch" value="' + esc(c.branch) + '" placeholder="main" autocomplete="off"></div></div>' +
-      '<div class="field"><label for="g-token">Nouvelle clé GitHub</label><input type="password" id="g-token" value="" placeholder="github_pat_…" autocomplete="off"></div>' +
-      '<div class="row-actions"><button type="button" class="btn teal" data-act="gconnect">Enregistrer la nouvelle clé</button>' +
-      (c.token ? '<button type="button" class="btn ghost" data-act="greload">Recharger depuis GitHub</button>' : '') + '</div>' +
-      '<h3 style="margin:22px 0 8px;font-size:16px">Créer la clé</h3><ol class="steps">' +
-      '<li>Sur GitHub : <strong>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</strong>.</li>' +
-      '<li><strong>Resource owner</strong> : l\'organisation qui possède le dépôt. <strong>Repository access</strong> : « Only select repositories » → le dépôt de l\'affichage.</li>' +
-      '<li><strong>Permissions → Repository permissions → Contents</strong> : « Read and write ».</li>' +
-      '<li>Choisissez une date d\'expiration (par ex. 1 an), générez, copiez le jeton et collez-le ci-dessus.</li></ol></details>' +
       '<section class="card"><h2>Sauvegarde</h2><p class="hint" style="margin-bottom:12px">Téléchargez une copie de tout le contenu, ou restaurez-en une.</p>' +
-      '<div class="row-actions"><button type="button" class="btn ghost" data-act="export">Télécharger data.json</button>' +
-      '<span class="btn ghost file-btn">Importer un fichier…<input type="file" accept="application/json,.json" data-act="import" aria-label="Importer un fichier data.json"></span></div></section>';
+      '<div class="row-actions"><button type="button" class="btn ghost" data-act="export">Télécharger une copie</button>' +
+      (S.connected ? '<button type="button" class="btn ghost" data-act="greload">Recharger le contenu en ligne</button>' : '') +
+      '<span class="btn ghost file-btn">Importer une copie…<input type="file" accept="application/json,.json" data-act="import" aria-label="Importer une copie"></span></div></section>';
   }
 
   /* ---------- Événements ---------- */
@@ -809,10 +836,13 @@
       case 'tdel': S.data.ticker = S.data.ticker.filter(function (t) { return t.id !== id; }); render(); changed(); break;
 
       case 'signadd': S.data.settings.signs.push({ id: uid('g'), text: '', arrow: 'right', active: true }); render(); changed(); var gi = $$('[data-sign=text]'); gi[gi.length - 1].focus(); break;
+      case 'fladd': S.data.settings.floors.push({ id: uid('f'), badge: String(S.data.settings.floors.length), name: '', rooms: '', arrow: '' }); render(); changed(); var fi = $$('[data-floor=name]'); fi[fi.length - 1].focus(); break;
+      case 'fldel': S.data.settings.floors.splice(+el.dataset.i, 1); render(); changed(); break;
+      case 'flup': var fl = S.data.settings.floors, k = +el.dataset.i, tmp = fl[k - 1]; fl[k - 1] = fl[k]; fl[k] = tmp; render(); changed(); break;
       case 'signdel': S.data.settings.signs.splice(+el.dataset.i, 1); render(); changed(); break;
       case 'gconnect': connect(); break;
       case 'greload':
-        if (S.dirty && !confirm('Abandonner les modifications non publiées et recharger depuis GitHub ?')) return;
+        if (S.dirty && !confirm('Abandonner les modifications non publiées et recharger le contenu en ligne ?')) return;
         clearDraft(); markDirty(false); load(); break;
       case 'logout': logout(); break;
       case 'acadd': addAccess(); break;
@@ -847,6 +877,9 @@
     } else if (t.dataset.t) {                 // message du bandeau
       var m = S.data.ticker.filter(function (x) { return x.id === t.dataset.id; })[0];
       if (m) { m.text = t.value; changed(); }
+    } else if (t.dataset.floor) {             // plan des étages
+      var fl2 = S.data.settings.floors[+t.dataset.i];
+      if (fl2) { fl2[t.dataset.floor] = t.value; changed(); }
     } else if (t.dataset.sign) {              // panneau d'orientation
       var g = S.data.settings.signs[+t.dataset.i];
       if (g) { g[t.dataset.sign] = t.value; changed(); }
@@ -922,7 +955,7 @@
         S.pending[path] = url.split(',')[1];
         selSlide().image = path;
         render(); changed();
-        toast('Image ajoutée. Elle sera envoyée sur GitHub au moment de publier.');
+        toast('Image ajoutée. Elle sera mise en ligne au moment de publier.');
       };
       img.onerror = function () { toast('Ce fichier n\'est pas une image lisible.', 'err'); };
       img.src = reader.result;
@@ -953,6 +986,7 @@
   }
 
   /* ---------- Démarrage ---------- */
+  if (INSTALL) { runInstall(); return; }
   $('#publish').addEventListener('click', publish);
   window.addEventListener('beforeunload', function (e) { if (S.dirty) { e.preventDefault(); e.returnValue = ''; } });
   window.addEventListener('resize', scalePreview);
@@ -965,7 +999,7 @@
   fetchAccess().then(function (a) {
     S.access = a;
     if (a && !S.cfg.token) showLogin();
-    else if (!a && !S.cfg.token) showSetup();
+    else if (!a && !S.cfg.token) { $('#login').hidden = false; $('#login-form').hidden = true; $('#not-installed').hidden = false; }
     else { document.body.classList.remove('locked'); load(); }
   });
 })();

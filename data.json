@@ -16,9 +16,33 @@
     "signs": [
       {
         "id": "g1",
-        "text": "Secrétariat",
+        "text": "Accès au secrétariat",
         "arrow": "right",
         "active": true
+      }
+    ],
+    "showFloors": true,
+    "floors": [
+      {
+        "id": "f0",
+        "badge": "0",
+        "name": "Rez-de-chaussée",
+        "rooms": "Cafétéria – Classe 1 – Salle des professeurs",
+        "arrow": "right"
+      },
+      {
+        "id": "f1",
+        "badge": "1",
+        "name": "1er étage",
+        "rooms": "Classes 2 et 3",
+        "arrow": ""
+      },
+      {
+        "id": "f2",
+        "badge": "2",
+        "name": "2e étage",
+        "rooms": "Classes 4, 5 et 6 – Bureau de la direction",
+        "arrow": ""
       }
     ]
   },

@@ -21,6 +21,11 @@
     refreshMinutes: 2
   };
   var DEFAULT_SIGNS = [{ id: 'g1', text: 'Secrétariat', arrow: 'right', active: true }];
+  var DEFAULT_FLOORS = [
+    { id: 'f0', badge: '0', name: 'Rez-de-chaussée', rooms: 'Cafétéria – Classe 1 – Salle des professeurs', arrow: 'right' },
+    { id: 'f1', badge: '1', name: '1er étage', rooms: 'Classes 2 et 3', arrow: '' },
+    { id: 'f2', badge: '2', name: '2e étage', rooms: 'Classes 4, 5 et 6 – Bureau de la direction', arrow: '' }
+  ];
   var ARROW_ANGLE = { right: 0, downright: 45, down: 90, downleft: 135, left: 180, upleft: -135, up: -90, upright: -45 };
   var WELCOME = {
     id: '_welcome', layout: 'announce', color: 'teal', tag: 'Bienvenue',
@@ -31,7 +36,7 @@
   var images = {};          // aperçu admin : chemin -> dataURL (images pas encore en ligne)
   var focusId = null;       // aperçu admin : annonce à afficher en continu
   var lastRaw = '';
-  var keys = { slides: '', schedule: '', ticker: '', theme: '', signs: '' };
+  var keys = { slides: '', schedule: '', ticker: '', theme: '', signs: '', floors: '' };
   var slideList = [], slideIdx = 0, shownId = null, slideTimer = null;
   var schedPage = 0, lastSchedHtml = null, autoRows = null;
 
@@ -79,6 +84,8 @@
     for (k in DEFAULT_SETTINGS) s[k] = DEFAULT_SETTINGS[k];
     for (k in (d.settings || {})) if (d.settings[k] !== '' && d.settings[k] != null) s[k] = d.settings[k];
     if (!Array.isArray(s.signs)) s.signs = DEFAULT_SIGNS;
+    if (!Array.isArray(s.floors)) s.floors = DEFAULT_FLOORS;
+    if (s.showFloors == null) s.showFloors = true;
     return {
       settings: s,
       slides: Array.isArray(d.slides) ? d.slides : [],
@@ -100,6 +107,8 @@
     }
     var gk = JSON.stringify(st.signs);
     if (gk !== keys.signs) { keys.signs = gk; renderSigns(); }
+    var fk = JSON.stringify([st.floors, st.showFloors]);
+    if (fk !== keys.floors) { keys.floors = fk; renderFloors(); keys.schedule = ''; }
     var tk = JSON.stringify([data.ticker, st.tickerLabel, st.tickerSpeed]);
     if (tk !== keys.ticker) { keys.ticker = tk; renderTicker(); }
     var sk = JSON.stringify([data.courses, st.scheduleTitle, st.scheduleFooter, st.scheduleEmpty, st.hideFinished, st.showTomorrow, st.scheduleRows]);
@@ -308,6 +317,33 @@
         '<span class="sign-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" style="transform:rotate(' + a + 'deg)"><g class="nudge"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg></span>' +
         '</div>';
     }).join('');
+  }
+
+  /* ---------- Plan des étages ---------- */
+  function arrowSvg(dir) {
+    var a = ARROW_ANGLE.hasOwnProperty(dir) ? ARROW_ANGLE[dir] : 0;
+    return '<svg viewBox="0 0 24 24" style="transform:rotate(' + a + 'deg)"><g class="nudge"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg>';
+  }
+  function renderFloors() {
+    var st = data.settings;
+    var list = (st.floors || []).filter(function (f) { return f && (String(f.name || '').trim() || String(f.rooms || '').trim()); }).slice(0, 4);
+    var on = st.showFloors !== false && list.length > 0;
+    $('stage').classList.toggle('has-floors', on);
+    var box = $('floors');
+    box.style.setProperty('--n', list.length || 1);
+    box.innerHTML = on ? list.map(function (f) {
+      return '<div class="floor">' +
+        (f.badge ? '<span class="floor-badge" aria-hidden="true">' + esc(f.badge) + '</span>' : '') +
+        '<span class="floor-txt">' + (f.name ? '<span class="floor-name">' + esc(f.name) + '</span>' : '') +
+        (f.rooms ? '<span class="floor-rooms">' + rich(f.rooms) + '</span>' : '') + '</span>' +
+        (f.arrow ? '<span class="floor-arrow" aria-hidden="true">' + arrowSvg(f.arrow) + '</span>' : '') +
+        '</div>';
+    }).join('') : '';
+    if (on) Array.prototype.forEach.call(box.querySelectorAll('.floor-rooms'), function (el) {
+      var size = 28;
+      while (el.scrollHeight > el.clientHeight + 1 && size > 20) { size -= 2; el.style.fontSize = size + 'px'; }
+    });
+    setTimeout(fitAll, 950);          // la zone principale change de hauteur
   }
 
   /* ---------- Bandeau ---------- */
