@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T11:00:00.000Z",
+  "updatedAt": "2026-11-24T11:04:07.980Z",
   "settings": {
     "theme": "light",
     "slideDuration": 12,
@@ -16,12 +16,11 @@
     "signs": [
       {
         "id": "g1",
-        "text": "Accès au secrétariat",
+        "text": "Secrétariat",
         "arrow": "right",
         "active": true
       }
     ],
-    "showFloors": true,
     "floors": [
       {
         "id": "f0",
@@ -44,28 +43,10 @@
         "rooms": "Classes 4, 5 et 6 – Bureau de la direction",
         "arrow": ""
       }
-    ]
+    ],
+    "showFloors": true
   },
   "slides": [
-    {
-      "id": "s1",
-      "active": true,
-      "layout": "classic",
-      "color": "teal",
-      "wide": false,
-      "tag": "À la une",
-      "kicker": "Inscriptions ouvertes",
-      "title": "Aide-soignant*·e*",
-      "text": "Une formation qualifiante en journée pour travailler auprès des patients, en maison de repos ou à domicile.",
-      "footerLabel": "Infos et inscriptions",
-      "footerText": "À l'accueil ou sur *eafcandenne.be*",
-      "qr": "https://eafcandenne.be/",
-      "qrLabel": "eafcandenne.be",
-      "image": "",
-      "duration": "",
-      "start": "",
-      "end": ""
-    },
     {
       "id": "s2",
       "active": true,
@@ -86,6 +67,25 @@
       "end": ""
     },
     {
+      "id": "s1",
+      "active": true,
+      "layout": "announce",
+      "color": "teal",
+      "wide": false,
+      "tag": "À la une",
+      "kicker": "Inscriptions ouvertes",
+      "title": "Aide-soignant*·e*",
+      "text": "Une formation qualifiante en journée pour travailler auprès des patients, en maison de repos ou à domicile.",
+      "footerLabel": "",
+      "footerText": "À l'accueil ou sur *eafcandenne.be*",
+      "qr": "https://eafcandenne.be/",
+      "qrLabel": "eafcandenne.be",
+      "image": "",
+      "duration": "",
+      "start": "",
+      "end": ""
+    },
+    {
       "id": "s3",
       "active": true,
       "layout": "classic",
@@ -100,6 +100,26 @@
       "qr": "",
       "qrLabel": "",
       "image": "",
+      "duration": "",
+      "start": "",
+      "end": ""
+    },
+    {
+      "id": "smwul0kjvk3xd",
+      "active": true,
+      "layout": "classic",
+      "color": "teal",
+      "wide": false,
+      "tag": "À la une",
+      "kicker": "",
+      "title": "Formation continue",
+      "text": "Envie d'évoluer dans vos pratiques?\nDécouvrez nos formations continues",
+      "footerLabel": "",
+      "footerText": "",
+      "qr": "",
+      "qrLabel": "",
+      "image": "",
+      "fit": "contain",
       "duration": "",
       "start": "",
       "end": ""
