@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-24T11:04:07.980Z",
+  "updatedAt": "2026-11-24T11:08:07.675Z",
   "settings": {
     "theme": "light",
     "slideDuration": 12,
@@ -130,15 +130,13 @@
       "id": "c1",
       "days": [
         1,
-        2,
-        3,
-        4
+        2
       ],
       "start": "08:30",
-      "end": "12:30",
+      "end": "16:00",
       "name": "Aide-soignant",
       "kind": "Formation qualifiante",
-      "room": "A1",
+      "room": "",
       "status": "normal",
       "note": "",
       "from": "",
@@ -147,14 +145,17 @@
     {
       "id": "c2",
       "days": [
+        1,
         2,
-        4
+        3,
+        4,
+        5
       ],
-      "start": "09:00",
-      "end": "12:00",
+      "start": "08:30",
+      "end": "16:00",
       "name": "Technicien en comptabilité",
       "kind": "Formation qualifiante",
-      "room": "B2",
+      "room": "",
       "status": "normal",
       "note": "",
       "from": "",
@@ -163,15 +164,13 @@
     {
       "id": "c3",
       "days": [
-        1,
-        2,
-        5
+        2
       ],
-      "start": "13:00",
-      "end": "16:30",
+      "start": "12:40",
+      "end": "20:30",
       "name": "Complément CESS",
       "kind": "Enseignement secondaire",
-      "room": "A3",
+      "room": "",
       "status": "normal",
       "note": "",
       "from": "",
@@ -180,14 +179,17 @@
     {
       "id": "c4",
       "days": [
+        1,
         2,
-        3
+        3,
+        4,
+        5
       ],
-      "start": "13:30",
-      "end": "16:30",
+      "start": "08:30",
+      "end": "16:00",
       "name": "Aide familial",
       "kind": "Formation qualifiante",
-      "room": "A2",
+      "room": "",
       "status": "normal",
       "note": "",
       "from": "",
@@ -197,10 +199,11 @@
       "id": "c5",
       "days": [
         1,
-        2
+        2,
+        4
       ],
       "start": "18:00",
-      "end": "21:00",
+      "end": "20:30",
       "name": "Anglais",
       "kind": "Cours du soir",
       "room": "C1",
@@ -250,6 +253,21 @@
       "name": "Électricité – connaissances de base",
       "kind": "Cours du soir",
       "room": "Atelier",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "cmwulccy3ihn3",
+      "days": [
+        1
+      ],
+      "start": "",
+      "end": "",
+      "name": "",
+      "kind": "",
+      "room": "",
       "status": "normal",
       "note": "",
       "from": "",
