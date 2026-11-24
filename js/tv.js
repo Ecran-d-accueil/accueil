@@ -314,7 +314,7 @@
       var first = Math.abs(a) > 90;   // flèche vers la gauche : placée avant le texte
       return '<div class="sign' + (first ? ' arrow-first' : '') + '">' +
         '<span class="sign-text">' + esc(g.text) + '</span>' +
-        '<span class="sign-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" style="transform:rotate(' + a + 'deg)"><g class="nudge"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg></span>' +
+        '<span class="sign-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" style="transform:rotate(' + a + 'deg)"><g class="nudge"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg></span>' +
         '</div>';
     }).join('');
   }
@@ -322,7 +322,7 @@
   /* ---------- Plan des étages ---------- */
   function arrowSvg(dir) {
     var a = ARROW_ANGLE.hasOwnProperty(dir) ? ARROW_ANGLE[dir] : 0;
-    return '<svg viewBox="0 0 24 24" style="transform:rotate(' + a + 'deg)"><g class="nudge"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg>';
+    return '<svg viewBox="0 0 24 24" style="transform:rotate(' + a + 'deg)"><g class="nudge"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></g></svg>';
   }
   function renderFloors() {
     var st = data.settings;
@@ -331,6 +331,11 @@
     $('stage').classList.toggle('has-floors', on);
     var box = $('floors');
     box.style.setProperty('--n', list.length || 1);
+    // largeur de chaque colonne proportionnelle à son texte (+ place pour la flèche)
+    box.style.gridTemplateColumns = list.map(function (f) {
+      var w = Math.max(30, 14 + String(f.rooms || '').replace(/\*/g, '').length * 0.7) + (f.arrow ? 8 : 0);
+      return 'minmax(0,' + w.toFixed(1) + 'fr)';
+    }).join(' ');
     box.innerHTML = on ? list.map(function (f) {
       return '<div class="floor">' +
         (f.badge ? '<span class="floor-badge" aria-hidden="true">' + esc(f.badge) + '</span>' : '') +
@@ -340,8 +345,8 @@
         '</div>';
     }).join('') : '';
     if (on) Array.prototype.forEach.call(box.querySelectorAll('.floor-rooms'), function (el) {
-      var size = 28;
-      while (el.scrollHeight > el.clientHeight + 1 && size > 20) { size -= 2; el.style.fontSize = size + 'px'; }
+      var size = 36;
+      while (el.scrollHeight > el.clientHeight + 1 && size > 24) { size -= 2; el.style.fontSize = size + 'px'; }
     });
     setTimeout(fitAll, 950);          // la zone principale change de hauteur
   }
