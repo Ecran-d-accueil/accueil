@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-25T09:25:43.335Z",
+  "updatedAt": "2026-11-25T09:34:10.162Z",
   "settings": {
     "theme": "light",
     "slideDuration": 12,
@@ -184,8 +184,8 @@
         4
       ],
       "start": "18:00",
-      "end": "21:15",
-      "name": "Anglais",
+      "end": "20:30",
+      "name": "Espagnol",
       "kind": "Cours du soir",
       "room": "",
       "status": "normal",
@@ -198,42 +198,11 @@
       "days": [
         3
       ],
-      "start": "18:00",
-      "end": "21:00",
-      "name": "Espagnol",
-      "kind": "Cours du soir",
+      "start": "08:30",
+      "end": "12:00",
+      "name": "Nouveaux actes infirmiers",
+      "kind": "Cours de NAID",
       "room": "C1",
-      "status": "normal",
-      "note": "",
-      "from": "",
-      "to": ""
-    },
-    {
-      "id": "c7",
-      "days": [
-        2,
-        4
-      ],
-      "start": "18:30",
-      "end": "21:30",
-      "name": "Cuisine italienne",
-      "kind": "Cours du soir",
-      "room": "Cuisine",
-      "status": "normal",
-      "note": "",
-      "from": "",
-      "to": ""
-    },
-    {
-      "id": "c8",
-      "days": [
-        4
-      ],
-      "start": "18:00",
-      "end": "21:00",
-      "name": "Électricité – connaissances de base",
-      "kind": "Cours du soir",
-      "room": "Atelier",
       "status": "normal",
       "note": "",
       "from": "",
@@ -242,14 +211,12 @@
     {
       "id": "cmwulccy3ihn3",
       "days": [
-        1,
-        2,
-        4
+        2
       ],
       "start": "18:00",
       "end": "20:30",
-      "name": "Espagnol",
-      "kind": "Cours d'espagnol",
+      "name": "Electricité: connaissances de base",
+      "kind": "Cours d'électricité",
       "room": "",
       "status": "normal",
       "note": "",
@@ -264,37 +231,7 @@
       "start": "09:00",
       "end": "12:10",
       "name": "Cuisine italienne familiale",
-      "kind": "Cours de cuisine",
-      "room": "",
-      "status": "normal",
-      "note": "",
-      "from": "",
-      "to": ""
-    },
-    {
-      "id": "cmwvx3ofhklzv",
-      "days": [
-        4
-      ],
-      "start": "09:00",
-      "end": "20:30",
-      "name": "Cuisine italienne familiale",
-      "kind": "Cours de cuisine",
-      "room": "",
-      "status": "normal",
-      "note": "",
-      "from": "",
-      "to": ""
-    },
-    {
-      "id": "cmwvx1u9x98vz",
-      "days": [
-        4
-      ],
-      "start": "09:00",
-      "end": "20:30",
-      "name": "Cuisine italienne familiale",
-      "kind": "Cours de cuisine",
+      "kind": "Cours de jour",
       "room": "",
       "status": "normal",
       "note": "",
@@ -306,7 +243,37 @@
       "days": [
         4
       ],
-      "start": "09:00",
+      "start": "18:00",
+      "end": "21:15",
+      "name": "Anglais ",
+      "kind": "Cours du soir",
+      "room": "",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "cmwvxcp9ves17",
+      "days": [
+        4
+      ],
+      "start": "08:30",
+      "end": "16:00",
+      "name": "Complément CESS",
+      "kind": "",
+      "room": "",
+      "status": "normal",
+      "note": "",
+      "from": "",
+      "to": ""
+    },
+    {
+      "id": "cmwvx5r4awos9",
+      "days": [
+        1
+      ],
+      "start": "18:00",
       "end": "20:30",
       "name": "Cuisine italienne familiale",
       "kind": "Cours de cuisine",
